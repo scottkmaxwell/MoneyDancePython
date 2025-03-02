@@ -16,6 +16,10 @@ Step 1 - Create a virtual environment
 -------------------------------------
 On my Mac, I no longer have Python 2.7, so I just use Python 3.x. I do this in
 my project folder.
+
+You can also install Python 2.7 from
+[the official download site](https://www.python.org/ftp/python/2.7.18/python-2.7.18-macosx10.9.pkg).
+
 ```
 python -m venv env
 ```

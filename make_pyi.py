@@ -591,24 +591,30 @@ class Module(object):
     def submodule_names(self):  # type: () -> Set[str]
         if self._submodules is None:
             self._submodules = set()
-            for member_name, member in inspect.getmembers(self.module):
-                if member_name == "__name__":
-                    continue
-                if "<java package " in str(member):
-                    self._submodules.add(member.__name__)
+            try:
+                for member_name, member in inspect.getmembers(self.module):
+                    if member_name == "__name__":
+                        continue
+                    if "<java package " in str(member):
+                        self._submodules.add(member.__name__)
+            except:
+                pass
         return self._submodules
 
     @property
     def visible_classes(self):  # type: () -> Dict[str, type]
-        return {
-            name: member
-            for name, member in inspect.getmembers(self.module)
-            if (
-                    inspect.isclass(member)
-                    and member.__module__ == self.name
-                    # and "{}.{}".format(member.__module__, name) not in type_conversions
-            )
-        }
+        try:
+            return {
+                name: member
+                for name, member in inspect.getmembers(self.module)
+                if (
+                        inspect.isclass(member)
+                        and member.__module__ == self.name
+                        # and "{}.{}".format(member.__module__, name) not in type_conversions
+                )
+            }
+        except:
+            return {}
 
     def find_type_dependencies(self):  # type: () -> Iterator[str]
         self.found_type_dependencies = True
@@ -766,17 +772,20 @@ class AllModules(object):
         return list(cls._modules.values())
 
     @classmethod
-    def find_module(cls, name):  # type: (str) -> Module
+    def find_module(cls, name):  # type: (str) -> Module | None
         mod_name, _, class_name = name.rpartition(".")
         if class_name[0].isupper():
             module = cls.find_module(mod_name)
-            if class_name not in dir(module.module):
+            if module is not None and class_name not in dir(module.module):
                 module.found_type_dependencies = False
                 importlib.import_module(name)
         else:
             module = cls._modules.get(name)
             if not module:
-                module = Module(name)
+                try:
+                    module = Module(name)
+                except ImportError:
+                    return None
                 cls._modules[name] = module
         return module
 
